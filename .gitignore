@@ -1,2 +1,6 @@
 __pycache__
-
+dist/
+build/
+setup.py
+*.egg-info/
+*.so
