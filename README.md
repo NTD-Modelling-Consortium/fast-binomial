@@ -2,3 +2,7 @@
 
 # Testing
 `poetry run python test.py`
+
+# Add precommit
+
+`poetry run pre-commit install`
