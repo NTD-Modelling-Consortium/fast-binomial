@@ -7,10 +7,11 @@
 #include <type_traits>
 
 #include <pybind11/numpy.h>
+#include <EigenRand/EigenRand>
 
 #include "sfc.h"
 
-using BinomialDist = std::binomial_distribution<int>;
+using BinomialDist = Eigen::Rand::BinomialGen<int>;
 using PRNG = sfc64;
 
 // template<typename Gen>
@@ -30,7 +31,7 @@ using PRNG = sfc64;
 class BinomialPool
 {
 public:
-    using value_type = BinomialDist::result_type;
+    using value_type = int; // BinomialDist::result_type;
     explicit BinomialPool(PRNG &generator, BinomialDist &&distribution, unsigned int block_size);
     value_type next();
 
