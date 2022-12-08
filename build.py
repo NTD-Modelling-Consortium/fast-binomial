@@ -1,9 +1,8 @@
-from pathlib import Path
-import requests
 import zipfile
+from pathlib import Path
 
+import requests
 from pybind11.setup_helpers import Pybind11Extension
-
 
 VENDOR_DIR = Path(__file__).resolve().parent / "vendor"
 
