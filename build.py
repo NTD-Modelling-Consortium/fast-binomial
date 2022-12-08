@@ -6,7 +6,13 @@ def build(setup_kwargs):
         Pybind11Extension(
             "fast_binomial_cpp",
             ["src/main.cpp", "src/fast_binomial.cpp"],
-            extra_compile_args=["-Ofast", "-funroll-loops", "-march=native", "--std=c++20"],
+            extra_compile_args=[
+                "-Ofast",
+                "-funroll-loops",
+                "-march=native",
+                "--std=c++20",
+                "-Ivendor",
+            ],
         ),
     ]
     setup_kwargs.update(

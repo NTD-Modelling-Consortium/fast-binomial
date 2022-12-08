@@ -1,15 +1,17 @@
 #pragma once
 
 #include <vector>
-#include <random>
 #include <optional>
+#include <random>
 #include <unordered_map>
 #include <type_traits>
 
 #include <pybind11/numpy.h>
 
+#include "sfc.h"
 
 using BinomialDist = std::binomial_distribution<int>;
+using PRNG = sfc64;
 
 // template<typename Gen>
 // class GeneratorPool
@@ -29,11 +31,11 @@ class BinomialPool
 {
 public:
     using value_type = BinomialDist::result_type;
-    explicit BinomialPool(std::mt19937 &generator, BinomialDist &&distribution, unsigned int block_size);
+    explicit BinomialPool(PRNG &generator, BinomialDist &&distribution, unsigned int block_size);
     value_type next();
 
 private:
-    std::mt19937 &generator_;
+    PRNG &generator_;
     BinomialDist distribution_;
     const unsigned int block_size_;
     mutable unsigned int next_index_ = 0;
@@ -50,7 +52,7 @@ public:
     inline BinomialPool::value_type generate_one(unsigned int n);
 
 private:
-    std::mt19937 generator_;
+    PRNG generator_;
     const float p_;
     const unsigned int block_size_;
     mutable std::vector<std::optional<BinomialPool>> binomials_;

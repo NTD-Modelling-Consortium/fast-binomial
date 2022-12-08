@@ -6,7 +6,7 @@
 
 namespace py = pybind11;
 
-BinomialPool::BinomialPool(std::mt19937 &generator, BinomialDist &&distribution, unsigned int block_size)
+BinomialPool::BinomialPool(PRNG &generator, BinomialDist &&distribution, unsigned int block_size)
     : generator_(generator), distribution_(std::move(distribution)), block_size_(block_size)
 {
 }
@@ -23,8 +23,8 @@ BinomialPool::value_type BinomialPool::next()
         std::generate_n(
             cache_.begin(),
             block_size_,
-            [this]() { return distribution_(generator_); }
-        );
+            [this]()
+            { return distribution_(generator_); });
         next_index_ = 0;
     }
 
@@ -47,7 +47,7 @@ FastBinomial::FastBinomial(float p, unsigned int block_size)
 //         const auto n = data[i];
 //         if (n == 0)
 //         {
-//             mutable_ret[i] = 0;    
+//             mutable_ret[i] = 0;
 //         }
 //         else
 //         {
