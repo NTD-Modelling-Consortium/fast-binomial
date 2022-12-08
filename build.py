@@ -66,7 +66,7 @@ def build(setup_kwargs):
     ext_modules = [
         Pybind11Extension(
             "fast_binomial_cpp",
-            ["src/main.cpp", "src/fast_binomial.cpp"],
+            ["src/main.cpp"],
             extra_compile_args=[
                 "-Ofast",
                 "-funroll-loops",

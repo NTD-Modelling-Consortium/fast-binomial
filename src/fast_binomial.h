@@ -1,62 +1,47 @@
 #pragma once
 
-#include <vector>
 #include <optional>
-#include <random>
-#include <unordered_map>
+#include <vector>
 #include <type_traits>
 
-#include <pybind11/numpy.h>
 #include <EigenRand/EigenRand>
+#include <Eigen/Dense>
 
 #include "sfc.h"
 
-using BinomialDist = Eigen::Rand::BinomialGen<int>;
-using PRNG = sfc64;
+using PRNG = sfc64; // Eigen::Rand::Vmt19937_64 (SIMD-ed version of MT19937);
 
-// template<typename Gen>
-// class GeneratorPool
-// {
-// public:
-//     explicit GeneratorPool(Gen &&gen, unsigned int block_size);
-//     std::result_of<Gen()> next() const;
-
-// private:
-//     Gen gen_;
-//     const unsigned int block_size_;
-//     unsigned int next_index_ = 0;
-//     mutable std::vector<float> cache_;
-// };
-
-class BinomialPool
+template <typename ScalarType, typename DistributionT, size_t CacheSize = 1024>
+class RandomPool
 {
 public:
-    using value_type = int; // BinomialDist::result_type;
-    explicit BinomialPool(PRNG &generator, BinomialDist &&distribution, unsigned int block_size);
-    value_type next();
+    explicit RandomPool(PRNG &generator, DistributionT &&distribution);
+    ScalarType next();
 
 private:
+    using CacheArray = Eigen::Array<ScalarType, CacheSize, 1>;
+
     PRNG &generator_;
-    BinomialDist distribution_;
-    const unsigned int block_size_;
-    unsigned int next_index_ = 0;
-    std::vector<value_type> cache_;
+    DistributionT distribution_;
+    // defaults indicates that we have to initialise the cache
+    unsigned int next_index_ = CacheSize + 1;
+    CacheArray cache_;
 };
 
 class FastBinomial
 {
 public:
-    explicit FastBinomial(float p, unsigned int block_size = 1000);
+    using value_type = int;
+    using distribution_type = Eigen::Rand::BinomialGen<value_type>;
+    using pool_type = RandomPool<value_type, distribution_type>;
 
-    // pybind11::array_t<BinomialPool::value_type> generate(const pybind11::array_t<unsigned int> &ns);
-
-    inline BinomialPool::value_type generate_one(unsigned int n);
+    explicit FastBinomial(float p);
+    value_type generate(unsigned int n);
 
 private:
     PRNG generator_;
     const float p_;
-    const unsigned int block_size_;
-    std::vector<std::optional<BinomialPool>> binomials_;
+    std::vector<std::optional<pool_type>> binomials_;
 };
 
 #include "fast_binomial.inl"
