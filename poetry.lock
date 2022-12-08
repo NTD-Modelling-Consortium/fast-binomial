@@ -375,6 +375,14 @@ python-versions = ">=3.6"
 global = ["pybind11-global (==2.10.1)"]
 
 [[package]]
+name = "pybind11-stubgen"
+version = "0.11.0"
+description = "PEP 561 type stubs generator for pybind11 modules"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyflakes"
 version = "2.5.0"
 description = "passive checker of Python programs"
@@ -520,7 +528,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9, <3.11"
-content-hash = "a5358a3860de56c817f9ba0719ed3443f3980a44354fc4b1eae12b7ff7828f85"
+content-hash = "f0eb0deb817135c2c79101e0c7dfab1d704ed7677a715e04722964015fc67144"
 
 [metadata.files]
 appnope = []
@@ -556,6 +564,7 @@ prompt-toolkit = []
 ptyprocess = []
 pure-eval = []
 pybind11 = []
+pybind11-stubgen = []
 pyflakes = []
 pygments = []
 pyyaml = []
