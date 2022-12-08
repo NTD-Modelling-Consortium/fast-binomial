@@ -1,6 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
+#include <Eigen/Dense>
+#include <EigenRand/EigenRand>
+
 #include "fast_binomial.h"
 
 namespace py = pybind11;
