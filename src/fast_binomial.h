@@ -9,7 +9,7 @@
 #include <pybind11/numpy.h>
 
 
-using BinomialDist = std::binomial_distribution<unsigned char>;
+using BinomialDist = std::binomial_distribution<int>;
 
 // template<typename Gen>
 // class GeneratorPool
