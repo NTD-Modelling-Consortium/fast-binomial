@@ -39,8 +39,8 @@ private:
     PRNG &generator_;
     BinomialDist distribution_;
     const unsigned int block_size_;
-    mutable unsigned int next_index_ = 0;
-    mutable std::vector<value_type> cache_;
+    unsigned int next_index_ = 0;
+    std::vector<value_type> cache_;
 };
 
 class FastBinomial
@@ -56,7 +56,7 @@ private:
     PRNG generator_;
     const float p_;
     const unsigned int block_size_;
-    mutable std::vector<std::optional<BinomialPool>> binomials_;
+    std::vector<std::optional<BinomialPool>> binomials_;
 };
 
 #include "fast_binomial.inl"

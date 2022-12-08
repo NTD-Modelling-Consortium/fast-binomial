@@ -1,7 +1,13 @@
 # Welcome to fast binomial
 
+# Requirements
+* C++ compiler (on ubuntu everything needed is in package `build-essential`. On Fedora: `gcc-c++`)
+* poetry
+* python3-wheel
+* setuptools
+
 # Build / install
-`poetry run build && poetry run install`
+`poetry install`
 
 # Testing
 `poetry run python test.py`
