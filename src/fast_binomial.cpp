@@ -13,7 +13,7 @@ BinomialPool::BinomialPool(std::mt19937 &generator, BinomialDist &&distribution,
 
 BinomialPool::value_type BinomialPool::next()
 {
-    if (next_index_ >= block_size_ || cache_.size() == 0)
+    if (next_index_ >= block_size_ || cache_.size() == 0) [[unlikely]]
     {
         if (cache_.size() == 0)
         {

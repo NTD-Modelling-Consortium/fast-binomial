@@ -13,6 +13,5 @@ PYBIND11_MODULE(fast_binomial_cpp, m) {
 
     py::class_<FastBinomial>(m, "FastBinomial")
         .def(py::init<float, unsigned int>())
-        //.def("generate", &FastBinomial::generate, py::arg("ns"), py::return_value_policy::move);
         .def("generate", py::vectorize(&FastBinomial::generate_one), py::arg("n"));
 }
