@@ -1,13 +1,16 @@
-from typing import Optional, overload
+from enum import Enum
+from typing import Optional, Type, overload
 
 import numpy as np
 from numpy.typing import NDArray
 
 from fast_binomial_cpp import (
-    FBScalarDynamicSFC64,
-    FBScalarFixedSFC64,
-    FBVectorDynamicSFC64,
-    FBVectorFixedSFC64,
+    FBScalarSFC64Block8,
+    FBScalarSFC64Block16,
+    FBScalarSFC64Block128,
+    FBVectorSFC64Block8,
+    FBVectorSFC64Block16,
+    FBVectorSFC64Block128,
 )
 
 
@@ -32,47 +35,60 @@ def verify_shapes(n_shape: tuple, p_shape: tuple):
     raise ValueError("Shape mismatch, p must be smaller or ")
 
 
+class BlockSize(Enum):
+    small = 8
+    medium = 16
+    large = 128
+
+
 class Generator:
+    bit_generator: BitGenerator
+    scaler_generator: Type[FBScalarSFC64Block8] | Type[FBScalarSFC64Block16] | Type[
+        FBScalarSFC64Block128
+    ]
+    vector_generator: Type[FBVectorSFC64Block8] | Type[FBVectorSFC64Block16] | Type[
+        FBVectorSFC64Block128
+    ]
+    fixed_generator: Optional[
+        FBScalarSFC64Block8
+        | FBScalarSFC64Block16
+        | FBScalarSFC64Block128
+        | FBVectorSFC64Block8
+        | FBVectorSFC64Block16
+        | FBVectorSFC64Block128
+    ]
+
     def __init__(
         self,
         bit_generator: BitGenerator,
         cached_binomial_p: Optional[float | NDArray[np.float_]] = None,
+        block_size: BlockSize = BlockSize.small,
     ) -> None:
         if isinstance(bit_generator, SFC64):
             self.bit_generator = bit_generator
+
+            if block_size == BlockSize.small:
+                self.scaler_generator = FBScalarSFC64Block8
+                self.vector_generator = FBVectorSFC64Block8
+            elif block_size == BlockSize.medium:
+                self.scaler_generator = FBScalarSFC64Block16
+                self.vector_generator = FBVectorSFC64Block16
+            else:
+                self.scaler_generator = FBScalarSFC64Block128
+                self.vector_generator = FBVectorSFC64Block128
+
             if cached_binomial_p is None:
                 self.fixed_generator = None
                 self.p_cached_shape = None
             else:
                 if isinstance(cached_binomial_p, float):
                     self.p_cached_shape = None
-                    self.fixed_generator = FBScalarFixedSFC64(cached_binomial_p)
+                    self.fixed_generator = self.scaler_generator(cached_binomial_p)
                 else:
                     self.p_cached_shape = cached_binomial_p.shape
-                    flat_p = cached_binomial_p.flatten()
-                    self.fixed_generator = FBVectorFixedSFC64(flat_p)
+                    self.fixed_generator = self.vector_generator(cached_binomial_p)
         else:
             raise ValueError(f"Unsupported bit generator {bit_generator}")
-        self._scalar_generator = None
-        self._vector_generator = None
-
-    @property
-    def scalar_generator(self):
-        if self._scalar_generator is None:
-            if isinstance(self.bit_generator, SFC64):
-                self._scalar_generator = FBScalarDynamicSFC64()
-            else:
-                assert False
-        return self._scalar_generator
-
-    @property
-    def vector_generator(self):
-        if self._vector_generator is None:
-            if isinstance(self.bit_generator, SFC64):
-                self._vector_generator = FBVectorDynamicSFC64()
-            else:
-                assert False
-        return self._vector_generator
 
     @overload
     def binomial(self, n: int | NDArray[np.int_]) -> int | NDArray[np.int_]:
@@ -129,6 +145,6 @@ class Generator:
                 return self.fixed_generator.generate(n)
         else:
             if isinstance(p, float):
-                return self.scalar_generator.generate(n, p)
+                return self.scaler_generator(p).generate(n)
             else:
-                return self.vector_generator.generate(n, p)
+                return self.vector_generator(p).generate(n)
