@@ -25,7 +25,7 @@ private:
     DistributionT distribution_;
     // defaults indicates that we have to initialise the cache
     unsigned int next_index_ = CacheSize + 1;
-    CacheArray cache_;
+    std::optional<CacheArray> cache_;
 };
 
 class FastBinomial
@@ -35,13 +35,15 @@ public:
     using distribution_type = Eigen::Rand::BinomialGen<value_type>;
     using pool_type = RandomPool<value_type, distribution_type>;
 
-    explicit FastBinomial(float p);
+    explicit FastBinomial(double p);
     value_type generate(unsigned int n);
+    value_type generate(unsigned int n, double p);
 
 private:
     PRNG generator_;
-    const float p_;
+    const double p_;
     std::vector<std::optional<pool_type>> binomials_;
+    std::vector<std::unordered_map<double, std::optional<pool_type>>> distributions_;
 };
 
 #include "fast_binomial.inl"

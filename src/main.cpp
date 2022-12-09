@@ -26,13 +26,28 @@ Args:
 
         .def(
             "generate",
-            py::vectorize(&FastBinomial::generate),
+            py::vectorize(py::overload_cast<unsigned int>(&FastBinomial::generate)),
             py::arg("n"),
             R"doc(
 Generate numbers from binomial distribution for a given `n`
 
 Args:
-    n (int/list/np.array): n - number of trials
+    n (int/list/np.array): number of trials
+
+Returns:
+    int/np.array (dependend on input) of binomials)doc")
+
+        .def(
+            "generate",
+            py::vectorize(py::overload_cast<unsigned int, double>(&FastBinomial::generate)),
+            py::arg("n"),
+            py::arg("p"),
+            R"doc(
+Generate numbers from binomial distribution for a given `n` and `p`
+
+Args:
+    n (int/list/np.array): number of trials
+    p (int/list/np.array): probability of trials
 
 Returns:
     int/np.array (dependend on input) of binomials)doc");
