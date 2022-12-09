@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, overload
 
 import numpy as np
 from numpy.typing import NDArray
@@ -24,30 +24,33 @@ class SFC64(BitGenerator):
 #     pass
 
 
-class _BaseGenerator:
-    pass
+def verify_shapes(n_shape: tuple, p_shape: tuple):
+    if len(p_shape) <= len(n_shape):
+        compare_section = n_shape[0 : len(p_shape)]
+        if compare_section == p_shape:
+            return None
+    raise ValueError("Shape mismatch, p must be smaller or ")
 
 
-class _GeneratorFixed(_BaseGenerator):
+class Generator:
     def __init__(
-        self, bit_generator: BitGenerator, cached_binomial_p: float | NDArray[np.float_]
+        self,
+        bit_generator: BitGenerator,
+        cached_binomial_p: Optional[float | NDArray[np.float_]] = None,
     ) -> None:
         if isinstance(bit_generator, SFC64):
-            if isinstance(cached_binomial_p, float):
-                self._generator = FBScalarFixedSFC64(cached_binomial_p)
-            else:
-                self._generator = FBVectorFixedSFC64(cached_binomial_p)
-        else:
-            raise ValueError(f"Unsupported bit generator {bit_generator}")
-
-    def binomial(self, n: int | NDArray[np.int_]) -> int | NDArray[np.int_]:
-        return self._generator.generate(n)
-
-
-class _GeneratorDynamic(_BaseGenerator):
-    def __init__(self, bit_generator: BitGenerator) -> None:
-        if isinstance(bit_generator, SFC64):
             self.bit_generator = bit_generator
+            if cached_binomial_p is None:
+                self.fixed_generator = None
+                self.p_cached_shape = None
+            else:
+                if isinstance(cached_binomial_p, float):
+                    self.p_cached_shape = None
+                    self.fixed_generator = FBScalarFixedSFC64(cached_binomial_p)
+                else:
+                    self.p_cached_shape = cached_binomial_p.shape
+                    flat_p = cached_binomial_p.flatten()
+                    self.fixed_generator = FBVectorFixedSFC64(flat_p)
         else:
             raise ValueError(f"Unsupported bit generator {bit_generator}")
         self._scalar_generator = None
@@ -71,20 +74,61 @@ class _GeneratorDynamic(_BaseGenerator):
                 assert False
         return self._vector_generator
 
+    @overload
+    def binomial(self, n: int | NDArray[np.int_]) -> int | NDArray[np.int_]:
+        """
+        Uses a cached value for p to accelerate binomial generation.
+        n must match shape of cached p.
+
+        Args:
+            n (int | NDArray[np.int_]): n_trials
+
+        Returns:
+            int | NDArray[np.int_]: Samples of the binomial distribution
+        """
+        ...
+
+    @overload
     def binomial(
         self, n: int | NDArray[np.int_], p: float | NDArray[np.float_]
     ) -> int | NDArray[np.int_]:
-        if isinstance(p, float):
-            return self.scalar_generator.generate(n, p)
+        """
+        Generates binomial samples, accelerated with caching.
+        n must match shape of p.
+
+        Args:
+            n (int | NDArray[np.int_]): n_trials
+            p (float | NDArray[np.float_]): _description_
+
+        Returns:
+            int | NDArray[np.int_]: _description_
+        """
+        ...
+
+    def binomial(
+        self, n: int | NDArray[np.int_], p: Optional[float | NDArray[np.float_]] = None
+    ) -> int | NDArray[np.int_]:
+        if isinstance(n, int):
+            if p is None and self.p_cached_shape is not None:
+                raise ValueError("Cached p is array but n is int")
+            elif p is not None and not isinstance(p, float):
+                # If p is not provided and p cached is array or p is provided and is array
+                raise ValueError("Provided p is array but n is int")
         else:
-            return self.vector_generator.generate(n, p)
+            if p is not None and not isinstance(p, float):
+                # If p is provided and array
+                verify_shapes(n.shape, p.shape)
+            elif p is None and self.p_cached_shape is not None:
+                # If p is not provided but p cached is array
+                verify_shapes(n.shape, self.p_cached_shape)
 
-
-def Generator(
-    bit_generator: BitGenerator,
-    cached_binomial_p: Optional[float | NDArray[np.float_]] = None,
-) -> _BaseGenerator:
-    if cached_binomial_p is None:
-        return _GeneratorDynamic(bit_generator)
-    else:
-        return _GeneratorFixed(bit_generator, cached_binomial_p)
+        if p is None:
+            if self.fixed_generator is None:
+                raise ValueError("p is required if not supplied for caching")
+            else:
+                return self.fixed_generator.generate(n)
+        else:
+            if isinstance(p, float):
+                return self.scalar_generator.generate(n, p)
+            else:
+                return self.vector_generator.generate(n, p)
