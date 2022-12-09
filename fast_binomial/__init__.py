@@ -27,7 +27,7 @@ class SFC64(BitGenerator):
 #     pass
 
 
-def verify_shapes(n_shape: tuple, p_shape: tuple):
+def _verify_shapes(n_shape: tuple, p_shape: tuple):
     if len(p_shape) <= len(n_shape):
         compare_section = n_shape[0 : len(p_shape)]
         if compare_section == p_shape:
@@ -57,6 +57,7 @@ class Generator:
         | FBVectorSFC64Block16
         | FBVectorSFC64Block128
     ]
+    p_cached_shape: Optional[tuple]
 
     def __init__(
         self,
@@ -64,6 +65,15 @@ class Generator:
         cached_binomial_p: Optional[float | NDArray[np.float_]] = None,
         block_size: BlockSize = BlockSize.small,
     ) -> None:
+        """
+        A faster generator for binomial distributions, that caches values for fixed probability.
+
+        Args:
+            bit_generator (BitGenerator): A Bit Generator provided by fast binomial
+            cached_binomial_p (Optional[float  |  NDArray[np.float_]], optional): Probability or probabilities
+            to cache. In None case only caches based on given values. Defaults to None.
+            block_size (BlockSize, optional): Select from different block sizes. Defaults to BlockSize.small.
+        """
         if isinstance(bit_generator, SFC64):
             self.bit_generator = bit_generator
 
@@ -133,10 +143,10 @@ class Generator:
         else:
             if p is not None and not isinstance(p, float):
                 # If p is provided and array
-                verify_shapes(n.shape, p.shape)
+                _verify_shapes(n.shape, p.shape)
             elif p is None and self.p_cached_shape is not None:
                 # If p is not provided but p cached is array
-                verify_shapes(n.shape, self.p_cached_shape)
+                _verify_shapes(n.shape, self.p_cached_shape)
 
         if p is None:
             if self.fixed_generator is None:
