@@ -2,6 +2,7 @@
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <array>
 #include <string>
@@ -43,7 +44,7 @@ bind_vector_generator(py::module& m, const char* name)
   py::class_<FastBinomialFixed<false, CacheSize>>(
     m, name, "Fast generator of number from a binomial distribution")
 
-    .def(py::init<const py::array_t<double>&>(),
+    .def(py::init<std::vector<double>>(),
          py::arg("p"),
          R"doc(
 Create a binomial generator for a given vector of probabilities.

@@ -31,15 +31,15 @@ RandomPool<ScalarType, DistributionT, PRNG, CacheSize>::next()
 
 template<bool scalar_p, unsigned short CacheSize, typename PRNG>
 inline FastBinomialFixed<scalar_p, CacheSize, PRNG>::FastBinomialFixed(
-  const p_type& p)
+  p_type&& p)
   : generator_(std::random_device()())
+  , p_(std::forward<p_type>(p))
 {
+
   if constexpr (scalar_p) {
     pools_ = pools_container_type(1);
-    p_ = p;
   } else {
-    p_ = p.request();
-    pools_ = pools_container_type(p_.size);
+    pools_ = pools_container_type(p_.size());
   }
 }
 
@@ -50,7 +50,7 @@ FastBinomialFixed<scalar_p, CacheSize, PRNG>::generate(unsigned int n)
   if (n == 0) {
     // TODO: refactor this, the same thing is on the bottom
     if constexpr (!scalar_p) {
-      p_index_ = (p_index_ + 1) % p_.size;
+      p_index_ = (p_index_ + 1) % p_.size();
     }
     return 0;
   }
@@ -69,7 +69,7 @@ FastBinomialFixed<scalar_p, CacheSize, PRNG>::generate(unsigned int n)
   }
 
   if constexpr (!scalar_p) {
-    p_index_ = (p_index_ + 1) % p_.size;
+    p_index_ = (p_index_ + 1) % p_.size();
   }
 
   return pool->next();
@@ -82,7 +82,6 @@ FastBinomialFixed<scalar_p, CacheSize, PRNG>::next_p()
   if constexpr (scalar_p) {
     return p_;
   } else {
-    auto ptr = static_cast<double*>(p_.ptr);
-    return ptr[p_index_];
+    return p_[p_index_];
   }
 }
