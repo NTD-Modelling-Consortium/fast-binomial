@@ -59,6 +59,8 @@ class EigenRand(VendorLib):
 
 
 def build(setup_kwargs):
+    VENDOR_DIR.mkdir(exist_ok=True)
+
     vendor_libs = [Eigen(), EigenRand()]
     for lib in vendor_libs:
         lib.fetch()
