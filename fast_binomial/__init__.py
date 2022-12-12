@@ -96,7 +96,9 @@ class Generator:
                     self.fixed_generator = self.scalar_generator(cached_binomial_p)
                 else:
                     self.p_cached_shape = cached_binomial_p.shape
-                    self.fixed_generator = self.vector_generator(cached_binomial_p)
+                    self.fixed_generator = self.vector_generator(
+                        cached_binomial_p.flatten().tolist()
+                    )
         else:
             raise ValueError(f"Unsupported bit generator {bit_generator}")
 
@@ -157,4 +159,4 @@ class Generator:
             if isinstance(p, float):
                 return self.scalar_generator(p).generate(n)
             else:
-                return self.vector_generator(p).generate(n)
+                return self.vector_generator(p.flatten().tolist()).generate(n)
