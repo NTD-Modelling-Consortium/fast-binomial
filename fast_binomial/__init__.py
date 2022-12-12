@@ -1,1 +1,1 @@
-from fast_binomial_cpp import FastBinomial
+from fast_binomial_cpp import *

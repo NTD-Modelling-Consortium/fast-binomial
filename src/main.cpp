@@ -1,54 +1,79 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/eigen.h>
-
 #include "fast_binomial.h"
+
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include <array>
+#include <string>
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(fast_binomial_cpp, m)
+template<unsigned short CacheSize>
+void
+bind_scalar_generator(py::module& m, const char* name)
 {
-    m.doc() = "Fast Binomial implementation with caching";
+  py::class_<FastBinomialFixed<true, CacheSize>>(
+    m, name, "Fast generator of number from a binomial distribution")
 
-    py::class_<FastBinomial>(
-        m,
-        "FastBinomial",
-        "Fast generator of number from a binomial distribution")
-
-        .def(
-            py::init<float>(),
-            py::arg("p"),
-            R"doc(
-Create a FastBinomial generator for a given probability and block_size cache.
+    .def(py::init<double>(),
+         py::arg("p"),
+         R"doc(
+Create a binomial generator for a given probability.
 
 Args:
-    p (int): probability)doc")
+    p (float): probability)doc")
 
-        .def(
-            "generate",
-            py::vectorize(py::overload_cast<unsigned int>(&FastBinomial::generate)),
-            py::arg("n"),
-            R"doc(
+    .def("generate",
+         py::vectorize(&FastBinomialFixed<true, CacheSize>::generate),
+         py::arg("n"),
+         R"doc(
+Generate numbers from binomial distribution for a given `n`
+Yeah
+Args:
+    n (int/list/np.array): number of trials
+
+Returns:
+    int/np.array (dependend on input) of binomials)doc");
+}
+
+template<unsigned short CacheSize>
+void
+bind_vector_generator(py::module& m, const char* name)
+{
+  py::class_<FastBinomialFixed<false, CacheSize>>(
+    m, name, "Fast generator of number from a binomial distribution")
+
+    .def(py::init<std::vector<double>>(),
+         py::arg("p"),
+         R"doc(
+Create a binomial generator for a given vector of probabilities.
+
+Args:
+    p (floats): probability)doc")
+
+    .def("generate",
+         py::vectorize(&FastBinomialFixed<false, CacheSize>::generate),
+         py::arg("n"),
+         R"doc(
 Generate numbers from binomial distribution for a given `n`
 
 Args:
     n (int/list/np.array): number of trials
 
 Returns:
-    int/np.array (dependend on input) of binomials)doc")
+  int/np.array (dependend on input) of binomials)doc");
+}
 
-        .def(
-            "generate",
-            py::vectorize(py::overload_cast<unsigned int, double>(&FastBinomial::generate)),
-            py::arg("n"),
-            py::arg("p"),
-            R"doc(
-Generate numbers from binomial distribution for a given `n` and `p`
+PYBIND11_MODULE(fast_binomial_cpp, m)
+{
+  m.doc() = "Fast Binomial implementation with caching";
 
-Args:
-    n (int/list/np.array): number of trials
-    p (int/list/np.array): probability of trials
+  bind_scalar_generator<8>(m, "FBScalarSFC64Block8");
+  bind_scalar_generator<16>(m, "FBScalarSFC64Block16");
+  bind_scalar_generator<128>(m, "FBScalarSFC64Block128");
 
-Returns:
-    int/np.array (dependend on input) of binomials)doc");
+  bind_vector_generator<8>(m, "FBVectorSFC64Block8");
+  bind_vector_generator<16>(m, "FBVectorSFC64Block16");
+  bind_vector_generator<128>(m, "FBVectorSFC64Block128");
 }

@@ -1,90 +1,87 @@
 #include <random>
 
-template <typename ScalarType, typename DistributionT, size_t CacheSize>
-RandomPool<ScalarType, DistributionT, CacheSize>::RandomPool(PRNG &generator, DistributionT &&distribution)
-    : generator_(generator), distribution_(std::move(distribution)), cache_(std::nullopt)
+template<typename ScalarType,
+         typename DistributionT,
+         typename PRNG,
+         unsigned short CacheSize>
+RandomPool<ScalarType, DistributionT, PRNG, CacheSize>::RandomPool(
+  PRNG& generator,
+  DistributionT&& distribution)
+  : generator_(generator)
+  , distribution_(std::move(distribution))
+  , cache_(std::nullopt)
 {
 }
 
-template <typename ScalarType, typename DistributionT, size_t CacheSize>
-ScalarType RandomPool<ScalarType, DistributionT, CacheSize>::next()
+template<typename ScalarType,
+         typename DistributionT,
+         typename PRNG,
+         unsigned short CacheSize>
+ScalarType
+RandomPool<ScalarType, DistributionT, PRNG, CacheSize>::next()
 {
-    if (next_index_ >= CacheSize) [[unlikely]]
-    {
-        cache_ = distribution_.generateLike(cache_.value_or(CacheArray{}), generator_);
-        next_index_ = 0;
-    }
+  if (next_index_ >= CacheSize) [[unlikely]] {
+    cache_ =
+      distribution_.generateLike(cache_.value_or(CacheArray{}), generator_);
+    next_index_ = 0;
+  }
 
-    return cache_.value()[next_index_++];
+  return cache_.value()[next_index_++];
 }
 
-inline FastBinomial::FastBinomial(double p)
-    : generator_(std::random_device()()), p_(p)
+template<bool scalar_p, unsigned short CacheSize, typename PRNG>
+inline FastBinomialFixed<scalar_p, CacheSize, PRNG>::FastBinomialFixed(
+  p_type&& p)
+  : generator_(std::random_device()())
+  , p_(std::forward<p_type>(p))
 {
+
+  if constexpr (scalar_p) {
+    pools_ = pools_container_type(1);
+  } else {
+    pools_ = pools_container_type(p_.size());
+  }
 }
 
-inline FastBinomial::value_type FastBinomial::generate(unsigned int n)
+template<bool scalar_p, unsigned short CacheSize, typename PRNG>
+inline FastBinomialFixed<scalar_p, CacheSize, PRNG>::value_type
+FastBinomialFixed<scalar_p, CacheSize, PRNG>::generate(unsigned int n)
 {
-    if (n == 0 || p_ == 0.0)
-    {
-        return 0;
+  if (n == 0) {
+    // TODO: refactor this, the same thing is on the bottom
+    if constexpr (!scalar_p) {
+      p_index_ = (p_index_ + 1) % p_.size();
     }
+    return 0;
+  }
 
-    if (p_ == 1.0)
-    {
-        return n;
-    }
+  const auto p = next_p();
+  auto& pools_for_p = pools_[p_index_];
 
-    // TODO: this is dangerous. We should either limit n or use an unordered_map (slower)
-    if (binomials_.size() <= n)
-    {
-        binomials_.resize(n + 1);
-    }
+  // TODO: this is dangerous. We should limit n
+  if (pools_for_p.size() <= n) {
+    pools_for_p.resize(n + 1);
+  }
 
-    auto &binomials = binomials_[n];
-    if (!binomials)
-    {
-        binomials.emplace(generator_, distribution_type(n, p_));
-    }
-    return binomials->next();
+  auto& pool = pools_for_p[n];
+  if (!pool) {
+    pool.emplace(generator_, distribution_type(n, p));
+  }
+
+  if constexpr (!scalar_p) {
+    p_index_ = (p_index_ + 1) % p_.size();
+  }
+
+  return pool->next();
 }
 
-inline FastBinomial::value_type FastBinomial::generate(unsigned int n, double p)
+template<bool scalar_p, unsigned short CacheSize, typename PRNG>
+inline double
+FastBinomialFixed<scalar_p, CacheSize, PRNG>::next_p()
 {
-    if (n == 0 || p == 0.0)
-    {
-        return 0;
-    }
-
-    if (p == 1.0)
-    {
-        return n;
-    }
-
-    if (distributions_.size() <= n)
-    {
-        distributions_.resize(n + 1);
-    }
-
-    auto &distributions_per_n = distributions_[n];
-
-    auto it = distributions_per_n.find(p);
-    if (it == distributions_per_n.end())
-    {
-        auto pool = pool_type(generator_, distribution_type(n, p));
-        const auto [it_p, _] = distributions_per_n.try_emplace(p, std::move(pool));
-        it = it_p;
-    }
-
-    return it->second.value().next();
+  if constexpr (scalar_p) {
+    return p_;
+  } else {
+    return p_[p_index_];
+  }
 }
-
-// inline FastBinomial::value_type FastBinomial::generate(unsigned int n, double p)
-// {
-//     if (n == 0 || p == 0.0)
-//     {
-//         return 0;
-//     }
-
-//     return distribution_type(n, p)(generator_);
-// }
