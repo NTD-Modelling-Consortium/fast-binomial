@@ -4,6 +4,7 @@
 
 #include <Eigen/Dense>
 #include <EigenRand/EigenRand>
+#include <pybind11/numpy.h>
 
 #include <optional>
 #include <type_traits>
@@ -52,10 +53,10 @@ public:
   using value_type = int;
   using distribution_type = Eigen::Rand::BinomialGen<value_type>;
   using pool_type = RandomPool<value_type, distribution_type, PRNG, CacheSize>;
-  // TODO: use np.array instead
-  using p_type = std::conditional_t<scalar_p, double, std::vector<double>>;
+  using p_type =
+    std::conditional_t<scalar_p, double, pybind11::array_t<double>>;
 
-  explicit FastBinomialFixed(p_type&& p);
+  explicit FastBinomialFixed(const p_type& p);
   value_type generate(unsigned int n);
 
 private:
@@ -65,7 +66,7 @@ private:
   double next_p();
 
   PRNG generator_;
-  const p_type p_;
+  std::conditional_t<scalar_p, double, pybind11::buffer_info> p_;
   // it will stay 0 for scalar_p, but will keep changing by 1 for non-scalar p
   int p_index_ = 0;
   pools_container_type pools_;
