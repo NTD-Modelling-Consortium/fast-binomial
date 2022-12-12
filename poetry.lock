@@ -42,7 +42,7 @@ python-versions = "*"
 
 [[package]]
 name = "black"
-version = "22.10.0"
+version = "22.12.0"
 description = "The uncompromising code formatter."
 category = "dev"
 optional = false
@@ -280,7 +280,7 @@ testing = ["docopt", "pytest (<6.0.0)"]
 
 [[package]]
 name = "pathspec"
-version = "0.10.2"
+version = "0.10.3"
 description = "Utility library for gitignore style pattern matching of file paths."
 category = "dev"
 optional = false
@@ -378,7 +378,7 @@ global = ["pybind11-global (==2.10.1)"]
 name = "pybind11-stubgen"
 version = "0.11.0"
 description = "PEP 561 type stubs generator for pybind11 modules"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -469,7 +469,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "traitlets"
-version = "5.6.0"
+version = "5.7.0"
 description = "Traitlets Python configuration system"
 category = "dev"
 optional = false
@@ -477,7 +477,9 @@ python-versions = ">=3.7"
 
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
+lint = ["black (>=22.6.0)", "mdformat (>0.7)", "ruff (>=0.0.156)"]
 test = ["pre-commit", "pytest"]
+typing = ["mypy (>=0.990)"]
 
 [[package]]
 name = "typing-extensions"
@@ -528,7 +530,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9, <3.11"
-content-hash = "f0eb0deb817135c2c79101e0c7dfab1d704ed7677a715e04722964015fc67144"
+content-hash = "ede5aaca14af0db559336591bdd8a5f0c4f203830f51bf070bdd7a8d74a14859"
 
 [metadata.files]
 appnope = []
