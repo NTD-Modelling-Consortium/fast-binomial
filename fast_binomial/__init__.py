@@ -43,7 +43,7 @@ class BlockSize(Enum):
 
 class Generator:
     bit_generator: BitGenerator
-    scaler_generator: Type[FBScalarSFC64Block8] | Type[FBScalarSFC64Block16] | Type[
+    scalar_generator: Type[FBScalarSFC64Block8] | Type[FBScalarSFC64Block16] | Type[
         FBScalarSFC64Block128
     ]
     vector_generator: Type[FBVectorSFC64Block8] | Type[FBVectorSFC64Block16] | Type[
@@ -78,13 +78,13 @@ class Generator:
             self.bit_generator = bit_generator
 
             if block_size == BlockSize.small:
-                self.scaler_generator = FBScalarSFC64Block8
+                self.scalar_generator = FBScalarSFC64Block8
                 self.vector_generator = FBVectorSFC64Block8
             elif block_size == BlockSize.medium:
-                self.scaler_generator = FBScalarSFC64Block16
+                self.scalar_generator = FBScalarSFC64Block16
                 self.vector_generator = FBVectorSFC64Block16
             else:
-                self.scaler_generator = FBScalarSFC64Block128
+                self.scalar_generator = FBScalarSFC64Block128
                 self.vector_generator = FBVectorSFC64Block128
 
             if cached_binomial_p is None:
@@ -93,7 +93,7 @@ class Generator:
             else:
                 if isinstance(cached_binomial_p, float):
                     self.p_cached_shape = None
-                    self.fixed_generator = self.scaler_generator(cached_binomial_p)
+                    self.fixed_generator = self.scalar_generator(cached_binomial_p)
                 else:
                     self.p_cached_shape = cached_binomial_p.shape
                     self.fixed_generator = self.vector_generator(cached_binomial_p)
@@ -155,6 +155,6 @@ class Generator:
                 return self.fixed_generator.generate(n)
         else:
             if isinstance(p, float):
-                return self.scaler_generator(p).generate(n)
+                return self.scalar_generator(p).generate(n)
             else:
                 return self.vector_generator(p).generate(n)
