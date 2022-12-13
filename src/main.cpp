@@ -69,10 +69,16 @@ PYBIND11_MODULE(fast_binomial_cpp, m)
 {
   m.doc() = "Fast Binomial implementation with caching";
 
+  bind_scalar_generator<1>(m, "FBScalarSFC64Block1");
+  bind_scalar_generator<2>(m, "FBScalarSFC64Block2");
+  bind_scalar_generator<4>(m, "FBScalarSFC64Block4");
   bind_scalar_generator<8>(m, "FBScalarSFC64Block8");
   bind_scalar_generator<16>(m, "FBScalarSFC64Block16");
   bind_scalar_generator<128>(m, "FBScalarSFC64Block128");
 
+  bind_vector_generator<1>(m, "FBVectorSFC64Block1");
+  bind_vector_generator<2>(m, "FBVectorSFC64Block2");
+  bind_vector_generator<4>(m, "FBVectorSFC64Block4");
   bind_vector_generator<8>(m, "FBVectorSFC64Block8");
   bind_vector_generator<16>(m, "FBVectorSFC64Block16");
   bind_vector_generator<128>(m, "FBVectorSFC64Block128");
