@@ -5,18 +5,18 @@ import numpy as np
 from numpy.typing import NDArray
 
 from fast_binomial_cpp import (
-    FBScalarSFC64Block1,
-    FBScalarSFC64Block2,
-    FBScalarSFC64Block4,
     FBScalarSFC64Block8,
     FBScalarSFC64Block16,
     FBScalarSFC64Block128,
-    FBVectorSFC64Block1,
-    FBVectorSFC64Block2,
-    FBVectorSFC64Block4,
+    FBScalarSFC64Block256,
+    FBScalarSFC64Block512,
+    FBScalarSFC64Block1024,
     FBVectorSFC64Block8,
     FBVectorSFC64Block16,
     FBVectorSFC64Block128,
+    FBVectorSFC64Block256,
+    FBVectorSFC64Block512,
+    FBVectorSFC64Block1024,
 )
 
 
@@ -42,36 +42,36 @@ def _verify_shapes(n_shape: tuple, p_shape: tuple):
 
 
 class BlockSize(Enum):
-    singular = 1
-    miniscule = 2
-    tiny = 4
     small = 8
     medium = 16
     large = 128
+    xlarge = 256
+    xxlarge = 512
+    xxxlarge = 1024
 
 
 class Generator:
     bit_generator: BitGenerator
-    scalar_generator: Type[FBScalarSFC64Block1] | Type[FBScalarSFC64Block2] | Type[
-        FBScalarSFC64Block4
+    scalar_generator: Type[FBScalarSFC64Block256] | Type[FBScalarSFC64Block512] | Type[
+        FBScalarSFC64Block1024
     ] | Type[FBScalarSFC64Block8] | Type[FBScalarSFC64Block16] | Type[
         FBScalarSFC64Block128
     ]
-    vector_generator: Type[FBVectorSFC64Block1] | Type[FBVectorSFC64Block2] | Type[
-        FBVectorSFC64Block4
+    vector_generator: Type[FBVectorSFC64Block256] | Type[FBVectorSFC64Block512] | Type[
+        FBVectorSFC64Block1024
     ] | Type[FBVectorSFC64Block8] | Type[FBVectorSFC64Block16] | Type[
         FBVectorSFC64Block128
     ]
     fixed_generator: Optional[
-        FBScalarSFC64Block1
-        | FBScalarSFC64Block2
-        | FBScalarSFC64Block4
+        FBScalarSFC64Block256
+        | FBScalarSFC64Block512
+        | FBScalarSFC64Block1024
         | FBScalarSFC64Block8
         | FBScalarSFC64Block16
         | FBScalarSFC64Block128
-        | FBVectorSFC64Block1
-        | FBVectorSFC64Block2
-        | FBVectorSFC64Block4
+        | FBVectorSFC64Block256
+        | FBVectorSFC64Block512
+        | FBVectorSFC64Block1024
         | FBVectorSFC64Block8
         | FBVectorSFC64Block16
         | FBVectorSFC64Block128
@@ -95,25 +95,26 @@ class Generator:
         """
         if isinstance(bit_generator, SFC64):
             self.bit_generator = bit_generator
-            if block_size == BlockSize.singular:
-                self.scalar_generator = FBScalarSFC64Block1
-                self.vector_generator = FBVectorSFC64Block1
-            elif block_size == BlockSize.miniscule:
-                self.scalar_generator = FBScalarSFC64Block2
-                self.vector_generator = FBVectorSFC64Block2
-            elif block_size == BlockSize.tiny:
-                self.scalar_generator = FBScalarSFC64Block4
-                self.vector_generator = FBVectorSFC64Block4
-            elif block_size == BlockSize.small:
+            if block_size == BlockSize.small:
                 self.scalar_generator = FBScalarSFC64Block8
                 self.vector_generator = FBVectorSFC64Block8
             elif block_size == BlockSize.medium:
                 self.scalar_generator = FBScalarSFC64Block16
                 self.vector_generator = FBVectorSFC64Block16
-            else:
+            elif block_size == BlockSize.large:
                 self.scalar_generator = FBScalarSFC64Block128
                 self.vector_generator = FBVectorSFC64Block128
-
+            elif block_size == BlockSize.xlarge:
+                self.scalar_generator = FBScalarSFC64Block256
+                self.vector_generator = FBVectorSFC64Block256
+            elif block_size == BlockSize.xxlarge:
+                self.scalar_generator = FBScalarSFC64Block512
+                self.vector_generator = FBVectorSFC64Block512
+            elif block_size == BlockSize.xxxlarge:
+                self.scalar_generator = FBScalarSFC64Block1024
+                self.vector_generator = FBVectorSFC64Block1024
+            else:
+                raise ValueError("Unknown block size")
             if cached_binomial_p is None:
                 self.fixed_generator = None
                 self.p_cached_shape = None
