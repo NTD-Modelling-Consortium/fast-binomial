@@ -29,36 +29,34 @@ RandomPool<ScalarType, DistributionT, PRNG, CacheSize>::next()
   return cache_.value()[next_index_++];
 }
 
-template<bool scalar_p, unsigned short CacheSize, typename PRNG>
-inline FastBinomialFixed<scalar_p, CacheSize, PRNG>::FastBinomialFixed(
+template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
+inline FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::FastBinomialFixed(
   p_type&& p)
   : generator_(std::random_device()())
   , p_(std::forward<p_type>(p))
 {
 
-  if constexpr (scalar_p) {
+  if constexpr (is_scalar_p) {
     pools_ = pools_container_type(1);
   } else {
     pools_ = pools_container_type(p_.size());
   }
 }
 
-template<bool scalar_p, unsigned short CacheSize, typename PRNG>
-inline FastBinomialFixed<scalar_p, CacheSize, PRNG>::value_type
-FastBinomialFixed<scalar_p, CacheSize, PRNG>::generate(unsigned int n)
+template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
+inline FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::value_type
+FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::generate(unsigned int n)
 {
   if (n == 0) {
-    // TODO: refactor this, the same thing is on the bottom
-    if constexpr (!scalar_p) {
-      p_index_ = (p_index_ + 1) % p_.size();
-    }
+    advance_p_index();
     return 0;
   }
 
   const auto p = next_p();
   auto& pools_for_p = pools_[p_index_];
 
-  // TODO: this is dangerous. We should limit n
+  // This is potentially dangerous, but it's a "feature". We don't want to check
+  // whether provided `n`s are sensible or not. This would reduce performance.
   if (pools_for_p.size() <= n) {
     pools_for_p.resize(n + 1);
   }
@@ -68,20 +66,27 @@ FastBinomialFixed<scalar_p, CacheSize, PRNG>::generate(unsigned int n)
     pool.emplace(generator_, distribution_type(n, p));
   }
 
-  if constexpr (!scalar_p) {
-    p_index_ = (p_index_ + 1) % p_.size();
-  }
+  advance_p_index();
 
   return pool->next();
 }
 
-template<bool scalar_p, unsigned short CacheSize, typename PRNG>
+template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
 inline double
-FastBinomialFixed<scalar_p, CacheSize, PRNG>::next_p()
+FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::next_p()
 {
-  if constexpr (scalar_p) {
+  if constexpr (is_scalar_p) {
     return p_;
   } else {
     return p_[p_index_];
+  }
+}
+
+template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
+inline constexpr void
+FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::advance_p_index()
+{
+  if constexpr (!is_scalar_p) {
+    p_index_ = (p_index_ + 1) % p_.size();
   }
 }
