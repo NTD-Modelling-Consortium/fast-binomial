@@ -1,7 +1,5 @@
 #pragma once
 
-#include "sfc.h"
-
 #include <Eigen/Dense>
 #include <EigenRand/EigenRand>
 
@@ -38,14 +36,14 @@ private:
 
 /**
  * Fast binomial implementation using RandomPool. Based on template parameter
- * `scalar_p`, it takes either a scalar probability in the constructor, or a
+ * `is_scalar_p`, it takes either a scalar probability in the constructor, or a
  * vector of probabilities.
  *
  * When vector of probabilities is used, .generate(n) just goes in a cycle
  * over `p`s from the vector. It's up to the client to use `n`s for
  * corresponding `p`s.
  */
-template<bool scalar_p, unsigned short CacheSize, typename PRNG = sfc64>
+template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
 class FastBinomialFixed
 {
 public:
@@ -53,7 +51,7 @@ public:
   using distribution_type = Eigen::Rand::BinomialGen<value_type>;
   using pool_type = RandomPool<value_type, distribution_type, PRNG, CacheSize>;
   // TODO: use np.array instead
-  using p_type = std::conditional_t<scalar_p, double, std::vector<double>>;
+  using p_type = std::conditional_t<is_scalar_p, double, std::vector<double>>;
 
   explicit FastBinomialFixed(p_type&& p);
   value_type generate(unsigned int n);
@@ -62,11 +60,13 @@ private:
   using pools_container_type =
     std::vector<std::vector<std::optional<pool_type>>>;
 
+  constexpr void advance_p_index();
   double next_p();
 
   PRNG generator_;
   const p_type p_;
-  // it will stay 0 for scalar_p, but will keep changing by 1 for non-scalar p
+  // it will stay 0 for is_scalar_p, but will keep changing by 1 for non-scalar
+  // p in advance_p_index()
   int p_index_ = 0;
   pools_container_type pools_;
 };

@@ -1,5 +1,7 @@
 #include "fast_binomial.h"
 
+#include "sfc.h"
+#include <EigenRand/EigenRand>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -9,11 +11,11 @@
 
 namespace py = pybind11;
 
-template<unsigned short CacheSize>
+template<unsigned short CacheSize, typename PRNG>
 void
 bind_scalar_generator(py::module& m, const char* name)
 {
-  py::class_<FastBinomialFixed<true, CacheSize>>(
+  py::class_<FastBinomialFixed<true, CacheSize, PRNG>>(
     m, name, "Fast generator of number from a binomial distribution")
 
     .def(py::init<double>(),
@@ -25,23 +27,23 @@ Args:
     p (float): probability)doc")
 
     .def("generate",
-         py::vectorize(&FastBinomialFixed<true, CacheSize>::generate),
+         py::vectorize(&FastBinomialFixed<true, CacheSize, PRNG>::generate),
          py::arg("n"),
          R"doc(
 Generate numbers from binomial distribution for a given `n`
 Yeah
 Args:
-    n (int/list/np.array): number of trials
+    n (int/list/1D np.array): number of trials
 
 Returns:
     int/np.array (dependend on input) of binomials)doc");
 }
 
-template<unsigned short CacheSize>
+template<unsigned short CacheSize, typename PRNG>
 void
 bind_vector_generator(py::module& m, const char* name)
 {
-  py::class_<FastBinomialFixed<false, CacheSize>>(
+  py::class_<FastBinomialFixed<false, CacheSize, PRNG>>(
     m, name, "Fast generator of number from a binomial distribution")
 
     .def(py::init<std::vector<double>>(),
@@ -53,13 +55,13 @@ Args:
     p (floats): probability)doc")
 
     .def("generate",
-         py::vectorize(&FastBinomialFixed<false, CacheSize>::generate),
+         py::vectorize(&FastBinomialFixed<false, CacheSize, PRNG>::generate),
          py::arg("n"),
          R"doc(
 Generate numbers from binomial distribution for a given `n`
 
 Args:
-    n (int/list/np.array): number of trials
+    n (int/list/1D np.array): number of trials
 
 Returns:
   int/np.array (dependend on input) of binomials)doc");
@@ -67,19 +69,14 @@ Returns:
 
 PYBIND11_MODULE(fast_binomial_cpp, m)
 {
-  m.doc() = "Fast Binomial implementation with caching";
+  m.doc() = "Fast Binomial implementation with caching of vectorised-generated "
+            "binomial distribution numbers";
 
-  bind_scalar_generator<256>(m, "FBScalarSFC64Block256");
-  bind_scalar_generator<512>(m, "FBScalarSFC64Block512");
-  bind_scalar_generator<1024>(m, "FBScalarSFC64Block1024");
-  bind_scalar_generator<8>(m, "FBScalarSFC64Block8");
-  bind_scalar_generator<16>(m, "FBScalarSFC64Block16");
-  bind_scalar_generator<128>(m, "FBScalarSFC64Block128");
+  // SIMD-ed version of MT19937
+  using mt19937 = Eigen::Rand::Vmt19937_64;
 
-  bind_vector_generator<256>(m, "FBVectorSFC64Block256");
-  bind_vector_generator<512>(m, "FBVectorSFC64Block512");
-  bind_vector_generator<1024>(m, "FBVectorSFC64Block1024");
-  bind_vector_generator<8>(m, "FBVectorSFC64Block8");
-  bind_vector_generator<16>(m, "FBVectorSFC64Block16");
-  bind_vector_generator<128>(m, "FBVectorSFC64Block128");
+  bind_scalar_generator<8, sfc64>(m, "FBScalarSFC64");
+  bind_vector_generator<8, sfc64>(m, "FBVectorSFC64");
+  bind_scalar_generator<8, mt19937>(m, "FBScalarMT19937");
+  bind_vector_generator<8, mt19937>(m, "FBVectorMT19937");
 }
