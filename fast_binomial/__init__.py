@@ -29,7 +29,7 @@ class SFC64(BitGenerator):
 
 def _verify_shapes(n_shape: tuple, p_shape: tuple):
     if len(p_shape) <= len(n_shape):
-        compare_section = n_shape[0 : len(p_shape)]
+        compare_section = n_shape[-len(p_shape) :]
         if compare_section == p_shape:
             return None
     raise ValueError("Shape mismatch, p must be smaller or ")
@@ -154,9 +154,26 @@ class Generator:
             if self.fixed_generator is None:
                 raise ValueError("p is required if not supplied for caching")
             else:
-                return self.fixed_generator.generate(n)
+                if self.p_cached_shape is not None and not isinstance(n, int):
+                    # p is vector cached and n is array
+                    return self.fixed_generator.generate(n.flatten()).reshape(n.shape)
+                else:
+                    # p is scalar cached or n is not array
+                    return self.fixed_generator.generate(n)
         else:
             if isinstance(p, float):
                 return self.scalar_generator(p).generate(n)
             else:
-                return self.vector_generator(p.flatten().tolist()).generate(n)
+                if not isinstance(n, int):
+                    # n is array
+                    return (
+                        self.vector_generator(p.flatten().tolist())
+                        .generate(n.flatten())
+                        .reshape(n.shape)
+                    )
+                else:
+                    return (
+                        self.vector_generator(p.flatten().tolist())
+                        .generate(n)
+                        .reshape(p.shape)
+                    )
