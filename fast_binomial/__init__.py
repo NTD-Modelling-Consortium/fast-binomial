@@ -126,26 +126,21 @@ class Generator:
             if self.fixed_generator is None:
                 raise ValueError("p is required if not supplied for caching")
             else:
-                if self.p_cached_shape is not None and not isinstance(n, int):
-                    # p is vector cached and n is array
+                if self.p_cached_shape is not None:
+                    # p is vector cached, n is array
+                    assert not isinstance(n, int)
                     return self.fixed_generator.generate(n.flatten()).reshape(n.shape)
                 else:
-                    # p is scalar cached or n is not array
+                    # p is scalar cached
                     return self.fixed_generator.generate(n)
         else:
             if isinstance(p, float):
                 return self.scalar_generator(p).generate(n)
             else:
-                if not isinstance(n, int):
-                    # n is array
-                    return (
-                        self.vector_generator(p.flatten().tolist())
-                        .generate(n.flatten())
-                        .reshape(n.shape)
-                    )
-                else:
-                    return (
-                        self.vector_generator(p.flatten().tolist())
-                        .generate(n)
-                        .reshape(p.shape)
-                    )
+                # n is array
+                assert not isinstance(n, int)
+                return (
+                    self.vector_generator(p.flatten().tolist())
+                    .generate(n.flatten())
+                    .reshape(n.shape)
+                )
