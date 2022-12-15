@@ -10,7 +10,7 @@
 `poetry install`
 
 # Testing
-`poetry run python test.py`
+`poetry run python examples/test.py`
 
 # Add precommit
 
