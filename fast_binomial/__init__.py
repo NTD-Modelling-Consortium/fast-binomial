@@ -75,33 +75,61 @@ class Generator:
                 )
 
     @overload
-    def binomial(self, n: int | NDArray[np.int_]) -> int | NDArray[np.int_]:
+    def binomial(self, n: int) -> int:
         """
         Uses a cached value for p to accelerate binomial generation.
-        n must match shape of cached p.
 
         Args:
-            n (int | NDArray[np.int_]): n_trials
+            n (int): n_trials
 
         Returns:
-            int | NDArray[np.int_]: Samples of the binomial distribution
+            int: A sample of the binomial distribution
         """
         ...
 
     @overload
-    def binomial(
-        self, n: int | NDArray[np.int_], p: float | NDArray[np.float_]
-    ) -> int | NDArray[np.int_]:
+    def binomial(self, n: NDArray[np.int_]) -> NDArray[np.int_]:
+        """
+        Uses a cached value for p to accelerate binomial generation.
+        n must match shape of cached p, or cached p must be a float.
+
+        Args:
+            n (NDArray[np.int_]): n_trials
+
+        Returns:
+            NDArray[np.int_]: Samples of the binomial distribution
+        """
+        ...
+
+    @overload
+    def binomial(self, n: int, p: float) -> int:
         """
         Generates binomial samples, accelerated with caching.
         n must match shape of p.
 
         Args:
-            n (int | NDArray[np.int_]): n_trials
-            p (float | NDArray[np.float_]): _description_
+            n (int): n_trials
+            p (float): Probability
 
         Returns:
-            int | NDArray[np.int_]: _description_
+            int: A sample of the binomial distribution
+        """
+        ...
+
+    @overload
+    def binomial(
+        self, n: NDArray[np.int_], p: float | NDArray[np.float_]
+    ) -> NDArray[np.int_]:
+        """
+        Generates binomial samples, accelerated with caching.
+        n must match shape of p, or p must be a float.
+
+        Args:
+            n (NDArray[np.int_]): n_trials
+            p (float | NDArray[np.float_]): Probability or probabilities
+
+        Returns:
+            NDArray[np.int_]: Samples of the binomial distribution
         """
         ...
 
