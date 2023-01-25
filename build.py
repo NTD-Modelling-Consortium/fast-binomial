@@ -1,5 +1,6 @@
 import zipfile
 from pathlib import Path
+import platform
 
 import requests
 from pybind11.setup_helpers import Pybind11Extension
@@ -65,17 +66,19 @@ def build(setup_kwargs):
     for lib in vendor_libs:
         lib.fetch()
 
+    cxx_flags = [
+        "-Ofast",
+        "-funroll-loops",
+        "--std=c++20",
+    ]
+    if platform.system() != "Darwin":
+        cxx_flags.append("-march=native")
+
     ext_modules = [
         Pybind11Extension(
             "fast_binomial_cpp",
             ["src/main.cpp"],
-            extra_compile_args=[
-                "-Ofast",
-                "-funroll-loops",
-                "-march=native",
-                "--std=c++20",
-                "-Wno-unused-local-typedefs",  # Eigen Rand :()
-            ],
+            extra_compile_args=cxx_flags,
             include_dirs=[VENDOR_DIR.name, *(lib.path() for lib in vendor_libs)],
         ),
     ]
