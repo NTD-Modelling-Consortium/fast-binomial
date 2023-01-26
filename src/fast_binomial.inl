@@ -44,7 +44,7 @@ inline FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::FastBinomialFixed(
 }
 
 template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
-inline FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::value_type
+inline typename FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::value_type
 FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::generate(unsigned int n)
 {
   if (n == 0) {
