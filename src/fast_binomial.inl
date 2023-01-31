@@ -31,8 +31,9 @@ RandomPool<ScalarType, DistributionT, PRNG, CacheSize>::next()
 
 template<bool is_scalar_p, unsigned short CacheSize, typename PRNG>
 inline FastBinomialFixed<is_scalar_p, CacheSize, PRNG>::FastBinomialFixed(
-  p_type&& p)
-  : generator_(std::random_device()())
+  p_type&& p,
+  std::optional<uint64_t> seed)
+  : generator_(seed.value_or(std::random_device()()))
   , p_(std::forward<p_type>(p))
 {
 
