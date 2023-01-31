@@ -12,6 +12,11 @@ from fast_binomial_cpp import (
 
 
 class BitGenerator:
+    seed: Optional[int]
+
+    def __init__(self, seed: Optional[int] = None) -> None:
+        self.seed = seed
+
     def __str__(self):
         return self.__class__.__name__
 
@@ -33,6 +38,7 @@ def _verify_shapes(n_shape: tuple, p_shape: tuple):
 
 
 class Generator:
+    seed: Optional[int]
     scalar_generator: Type[FBScalarSFC64] | Type[FBScalarMT19937]
     vector_generator: Type[FBVectorSFC64] | Type[FBVectorMT19937]
     fixed_generator: Optional[
@@ -61,17 +67,21 @@ class Generator:
             self.vector_generator = FBVectorMT19937
         else:
             raise ValueError(f"Unsupported bit generator {bit_generator}")
+        self.seed = bit_generator.seed
+
         if cached_binomial_p is None:
             self.fixed_generator = None
             self.p_cached_shape = None
         else:
             if isinstance(cached_binomial_p, float):
                 self.p_cached_shape = None
-                self.fixed_generator = self.scalar_generator(cached_binomial_p)
+                self.fixed_generator = self.scalar_generator(
+                    cached_binomial_p, seed=self.seed
+                )
             else:
                 self.p_cached_shape = cached_binomial_p.shape
                 self.fixed_generator = self.vector_generator(
-                    cached_binomial_p.flatten().tolist()
+                    cached_binomial_p.flatten().tolist(), seed=self.seed
                 )
 
     @overload
@@ -163,12 +173,12 @@ class Generator:
                     return self.fixed_generator.generate(n)
         else:
             if isinstance(p, float):
-                return self.scalar_generator(p).generate(n)
+                return self.scalar_generator(p, seed=self.seed).generate(n)
             else:
                 # n is array
                 assert not isinstance(n, int)
                 return (
-                    self.vector_generator(p.flatten().tolist())
+                    self.vector_generator(p.flatten().tolist(), seed=self.seed)
                     .generate(n.flatten())
                     .reshape(n.shape)
                 )
