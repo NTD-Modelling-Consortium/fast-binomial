@@ -7,6 +7,7 @@
 #include <pybind11/stl.h>
 
 #include <array>
+#include <optional>
 #include <string>
 
 namespace py = pybind11;
@@ -18,8 +19,9 @@ bind_scalar_generator(py::module& m, const char* name)
   py::class_<FastBinomialFixed<true, CacheSize, PRNG>>(
     m, name, "Fast generator of number from a binomial distribution")
 
-    .def(py::init<double>(),
+    .def(py::init<double, std::optional<uint64_t>>(),
          py::arg("p"),
+         py::arg("seed") = py::none(),
          R"doc(
 Create a binomial generator for a given probability.
 
@@ -46,8 +48,9 @@ bind_vector_generator(py::module& m, const char* name)
   py::class_<FastBinomialFixed<false, CacheSize, PRNG>>(
     m, name, "Fast generator of number from a binomial distribution")
 
-    .def(py::init<std::vector<double>>(),
+    .def(py::init<std::vector<double>, std::optional<uint64_t>>(),
          py::arg("p"),
+         py::arg("seed") = py::none(),
          R"doc(
 Create a binomial generator for a given vector of probabilities.
 

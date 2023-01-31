@@ -53,7 +53,7 @@ public:
   // TODO: use np.array instead
   using p_type = std::conditional_t<is_scalar_p, double, std::vector<double>>;
 
-  explicit FastBinomialFixed(p_type&& p);
+  explicit FastBinomialFixed(p_type&& p, std::optional<uint64_t> seed);
   value_type generate(unsigned int n);
 
 private:
