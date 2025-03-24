@@ -104,7 +104,7 @@ setup_kwargs = {
     "packages": packages,
     "package_data": package_data,
     "install_requires": install_requires,
-    "python_requires": ">=3.10,<3.11",
+    "python_requires": ">=3.10,<4.0",
 }
 
 build(setup_kwargs)
